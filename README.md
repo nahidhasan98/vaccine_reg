@@ -1,4 +1,3 @@
 # Vaccine Registration
 
-By Python
-Using Flask web framework
+By Python, using Flask web framework
