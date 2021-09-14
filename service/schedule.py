@@ -155,11 +155,8 @@ class Registration(ISODate):
 
 
 class GetSchedule(ISODate):
-    date = None
-
     # constructor
     def __init__(self, date):
-        self.date = date
         ISODate.__init__(self, date)
 
     # function for getting schedule on a specific date
