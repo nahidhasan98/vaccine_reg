@@ -1,4 +1,3 @@
-from app import registration
 from datetime import datetime, timedelta
 import uuid
 from model.schedule import Schedule
@@ -124,3 +123,35 @@ def vaccineReg(nid, center, date):
 
     s.save()
     return s
+
+
+# function for getting schedule on a specific date
+def getSchedule(date):
+    s = Schedule()
+
+    # s.date = date
+
+    # taking care of date
+    ISODate = getISODate(date)
+
+    if ISODate == False:
+        return "invalid date format. required format is: 31-12-21"
+    elif ISODate == True:
+        return "invalid date. date must be later from today"
+
+    # querying from db
+    rows = Schedule.objects(date=ISODate)
+
+    # processing to dict for json
+    results = []
+    for row in rows:
+        temp = {
+            '_id': row['_id'],
+            'nid': row['nid'],
+            'center': row['center'],
+            'date': row['date'],
+            'status': row['status'],
+        }
+        results.append(temp)
+
+    return results

@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from service.registration import vaccineReg
+from service.schedule import vaccineReg, getSchedule
 from db.connection import dbConnect
 from db.seeder import runSeeder
 from model.schedule import Schedule
@@ -12,11 +12,27 @@ app = Flask('__name__')
 # creating route
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({"msg": "Hello world!"})
+    if not request.is_json:
+        return jsonify({"msg": "no json object provided"}), 400
+
+    date = request.json.get('date')
+
+    status = getSchedule(date)
+
+    if type(status) != Schedule:
+        return jsonify({"msg": status})
+
+    return jsonify({
+        "date": status['date'],
+        "schedule": status
+    })
 
 
 @app.route('/reg', methods=['POST'])
 def registration():
+    if not request.is_json:
+        return jsonify({"msg": "no json object provided"}), 400
+
     nid = request.json.get('nid')
     if not nid:
         return jsonify({"msg": "nid not provided"}), 400
