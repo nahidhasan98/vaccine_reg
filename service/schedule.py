@@ -11,17 +11,26 @@ class ISODate:
     def __init__(self, date):
         self.date = date
 
-    # converting input date to usable format. if invalid, return error message
-    def _getISODate(self):
+    def _validInputFormat(self):
         try:
-            ISODate = datetime.strptime(self.date, '%d-%m-%y')
+            ISOFromattedDate = datetime.strptime(self.date, '%d-%m-%y')
         except:
             return False
 
-        if ISODate <= datetime.today():
+        return ISOFromattedDate
+
+    # converting input date to usable format. if invalid, return error message
+
+    def _getISODate(self):
+        ISOFromattedDate = self._validInputFormat()
+
+        if not ISOFromattedDate:
+            return False
+
+        if ISOFromattedDate <= datetime.today():
             return True
 
-        return ISODate
+        return ISOFromattedDate
 
 
 class Registration(ISODate):
@@ -157,12 +166,10 @@ class GetSchedule(ISODate):
 
     def _getSchedule(self):
         # taking care of date
-        ISODate = self._getISODate()
+        ISODate = self._validInputFormat()
 
-        if ISODate == False:
+        if not ISODate:
             return "invalid date format. required format is: 31-12-21"
-        elif ISODate == True:
-            return "invalid date. date must be later from today"
 
         # querying from db
         rows = Schedule.objects(date=ISODate)

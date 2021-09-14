@@ -21,7 +21,7 @@ def schedule():
     status = status._getSchedule()
 
     if type(status) != list:
-        return jsonify({"err": status})
+        return jsonify({"err": status}), 400
 
     return jsonify({
         "date": date,
@@ -48,7 +48,7 @@ def registration():
     status = status._vaccineRegistration()
 
     if type(status) != Schedule:
-        return jsonify({"err": status})
+        return jsonify({"err": status}), 400
 
     return jsonify({
         "msg": "registration successful",
