@@ -13,18 +13,18 @@ app = Flask('__name__')
 @app.route('/', methods=['GET'])
 def schedule():
     if not request.is_json:
-        return jsonify({"msg": "no json object provided"}), 400
+        return jsonify({"err": "no json object provided"}), 400
 
     date = request.json.get('date')
 
     status = GetSchedule(date)
     status = status._getSchedule()
 
-    if type(status) != Schedule:
-        return jsonify({"msg": status})
+    if type(status) != list:
+        return jsonify({"err": status})
 
     return jsonify({
-        "date": status['date'],
+        "date": date,
         "schedule": status
     })
 
@@ -32,15 +32,15 @@ def schedule():
 @app.route('/reg', methods=['POST'])
 def registration():
     if not request.is_json:
-        return jsonify({"msg": "no json object provided"}), 400
+        return jsonify({"err": "no json object provided"}), 400
 
     nid = request.json.get('nid')
     if not nid:
-        return jsonify({"msg": "nid not provided"}), 400
+        return jsonify({"err": "nid not provided"}), 400
 
     center = request.json.get('center')
     if not center:
-        return jsonify({"msg": "center not provided"}), 400
+        return jsonify({"err": "center not provided"}), 400
 
     date = request.json.get('date')
 
@@ -48,7 +48,7 @@ def registration():
     status = status._vaccineRegistration()
 
     if type(status) != Schedule:
-        return jsonify({"msg": status})
+        return jsonify({"err": status})
 
     return jsonify({
         "msg": "registration successful",
