@@ -17,6 +17,7 @@ def schedule():
 
     date = request.json.get('date')
 
+# creating object for GetSchedule class
     status = GetSchedule(date)
     status = status._getSchedule()
 
@@ -44,6 +45,7 @@ def registration():
 
     date = request.json.get('date')
 
+    # creating object for Registration class
     status = Registration(nid, center, date)
     status = status._vaccineRegistration()
 
