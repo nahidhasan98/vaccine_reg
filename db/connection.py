@@ -8,5 +8,4 @@ def dbConnect():
     alias = "dbSession"
     dbName = "py_flask"
 
-    mongoengine.register_connection(
-        alias=alias, db=dbName, host=host, port=port)
+    mongoengine.connect(db=dbName, alias=alias, host=host, port=port)
