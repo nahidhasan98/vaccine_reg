@@ -37,11 +37,6 @@ class Registration(ISODate):
     # daily registration limit
     dailyLimit = 3
 
-    # variable
-    nid = None
-    center = None
-    date = None
-
     # constructor
     def __init__(self, nid, center, date):
         self.nid = nid
