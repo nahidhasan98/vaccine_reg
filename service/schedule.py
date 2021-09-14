@@ -4,154 +4,179 @@ from model.schedule import Schedule
 from model.user import User
 
 
-# daile registration limit
-dailyLimit = 3
+class ISODate:
+    date = None
+
+    # constructor
+    def __init__(self, date):
+        self.date = date
+
+    # converting input date to usable format. if invalid, return error message
+    def _getISODate(self):
+        try:
+            ISODate = datetime.strptime(self.date, '%d-%m-%y')
+        except:
+            return False
+
+        if ISODate <= datetime.today():
+            return True
+
+        return ISODate
 
 
-# getting next available free slot/date for registration for a specific center
-def getNextAvailableSlot(center):
-    today = datetime.today()
+class Registration(ISODate):
+    # daily registration limit
+    dailyLimit = 3
 
-    rows = Schedule.objects.aggregate([
-        {
-            '$match': {'center': center, 'date': {'$gt': today}}
-        },
-        {
-            '$group': {'_id': '$date', 'totalCount': {'$sum': 1}}
-        },
-        {
-            '$sort': {'_id': 1}
-        }
-    ])
+    # variable
+    nid = None
+    center = None
+    date = None
 
-    # converting CommandCursor object to list
-    rows = list(rows)
+    # constructor
+    def __init__(self, nid, center, date):
+        self.nid = nid
+        self.center = center
+        self.date = date
+        ISODate.__init__(self, date)
 
-    # safely assuming slot
-    if len(rows) > 0:
-        # last registered day + 1
-        gotSlot = rows[len(rows)-1]['_id']+timedelta(days=1)
-    else:
-        # if no registration done in this center
-        gotSlot = today+timedelta(days=1)
+    # getting next available free slot/date for registration for a specific center
 
-    # checking if any slot available between total registartion date range
-    for row in rows:
-        if row['totalCount'] < dailyLimit:
-            gotSlot = row['_id']
-            break
+    def __getNextAvailableSlot(self):
+        today = datetime.today()
 
-    return gotSlot
+        rows = Schedule.objects.aggregate([
+            {
+                '$match': {'center': self.center, 'date': {'$gt': today}}
+            },
+            {
+                '$group': {'_id': '$date', 'totalCount': {'$sum': 1}}
+            },
+            {
+                '$sort': {'_id': 1}
+            }
+        ])
 
+        # converting CommandCursor object to list
+        rows = list(rows)
 
-# checking available free slot for registration for a specific center and date
-def hasSlot(center, ISODate):
-    counter = Schedule.objects(center=center, date=ISODate)
+        # safely assuming slot
+        if len(rows) > 0:
+            # last registered day + 1
+            gotSlot = rows[len(rows)-1]['_id']+timedelta(days=1)
+        else:
+            # if no registration done in this center
+            gotSlot = today+timedelta(days=1)
 
-    if len(counter) < dailyLimit:
-        return True
+        # checking if any slot available between total registartion date range
+        for row in rows:
+            if row['totalCount'] < self.dailyLimit:
+                gotSlot = row['_id']
+                break
 
-    return False
+        return gotSlot
 
+    # checking available free slot for registration for a specific center and date
 
-# converting input date to usable format. if invalid, return error message
-def getISODate(date):
-    try:
-        ISODate = datetime.strptime(date, '%d-%m-%y')
-    except:
+    def __hasSlot(self, ISODate):
+        counter = Schedule.objects(center=self.center, date=ISODate)
+
+        if len(counter) < self.dailyLimit:
+            return True
+
         return False
 
-    if ISODate <= datetime.today():
-        return True
+    # checking if provided nid is already registered or not
 
-    return ISODate
+    def __alreadyRegistered(self):
+        exist = Schedule.objects(nid=self.nid).first()
+
+        if exist:
+            return True
+
+        return False
+
+    # checking if provided nid is valid or not
+
+    def __validNID(self):
+        res = User.objects(nid=self.nid).first()
+
+        if res:
+            return True
+
+        return False
+
+    # function for registration
+
+    def _vaccineRegistration(self):
+        s = Schedule()
+
+        s._id = uuid.uuid4().hex
+        s.nid = self.nid
+        s.center = self.center
+        s.date = self.date
+
+        # checking nid validitidy
+        if not self.__validNID():
+            return "invalid nid"
+
+        # already registered??
+        if self.__alreadyRegistered():
+            return "this nid already registered"
+
+        # taking care of date
+        if self.date:
+            ISODate = self._getISODate()
+
+            if ISODate == False:
+                return "invalid date format. required format is: 31-12-21"
+            elif ISODate == True:
+                return "invalid date. date must be later from today"
+
+            if not self.__hasSlot(ISODate):
+                freeSlot = self.__getNextAvailableSlot()
+                return "no available slot on " + self.date + ", next available free slot on " + str(freeSlot)
+            else:
+                s.date = ISODate
+        else:
+            s.date = self.__getNextAvailableSlot()
+
+        s.save()
+        return s
 
 
-# checking if provided nid is already registered or not
-def alreadyRegistered(nid):
-    exist = Schedule.objects(nid=nid).first()
+class GetSchedule(ISODate):
+    date = None
 
-    if exist:
-        return True
+    # constructor
+    def __init__(self, date):
+        self.date = date
+        ISODate.__init__(self, date)
 
-    return False
+    # function for getting schedule on a specific date
 
-
-# checking if provided nid is valid or not
-def validNID(nid):
-    res = User.objects(nid=nid).first()
-
-    if res:
-        return True
-
-    return False
-
-
-# function for registration
-def vaccineReg(nid, center, date):
-    s = Schedule()
-
-    s._id = uuid.uuid4().hex
-    s.nid = nid
-    s.center = center
-    s.date = date
-
-    # checking nid validitidy
-    if not validNID(nid):
-        return "invalid nid"
-
-    # already registered??
-    if alreadyRegistered(nid):
-        return "this nid already registered"
-
-    # taking care of date
-    if date:
-        ISODate = getISODate(date)
+    def _getSchedule(self):
+        # taking care of date
+        ISODate = self._getISODate()
 
         if ISODate == False:
             return "invalid date format. required format is: 31-12-21"
         elif ISODate == True:
             return "invalid date. date must be later from today"
 
-        if not hasSlot(center, ISODate):
-            freeSlot = getNextAvailableSlot(center)
-            return "no available slot on " + date + ", next available free slot on " + str(freeSlot)
-        else:
-            s.date = ISODate
-    else:
-        s.date = getNextAvailableSlot(center)
+        # querying from db
+        rows = Schedule.objects(date=ISODate)
 
-    s.save()
-    return s
+        # processing to dict for json
+        results = []
+        for row in rows:
+            temp = {
+                '_id': row['_id'],
+                'nid': row['nid'],
+                'center': row['center'],
+                'date': row['date'],
+                'status': row['status'],
+            }
+            results.append(temp)
 
-
-# function for getting schedule on a specific date
-def getSchedule(date):
-    s = Schedule()
-
-    # s.date = date
-
-    # taking care of date
-    ISODate = getISODate(date)
-
-    if ISODate == False:
-        return "invalid date format. required format is: 31-12-21"
-    elif ISODate == True:
-        return "invalid date. date must be later from today"
-
-    # querying from db
-    rows = Schedule.objects(date=ISODate)
-
-    # processing to dict for json
-    results = []
-    for row in rows:
-        temp = {
-            '_id': row['_id'],
-            'nid': row['nid'],
-            'center': row['center'],
-            'date': row['date'],
-            'status': row['status'],
-        }
-        results.append(temp)
-
-    return results
+        return results
