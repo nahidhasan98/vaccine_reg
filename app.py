@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from db.connection import dbConnect
 from db.seeder import runSeeder
 from service.schedule import ScheduleService
-from model.schedule import ScheduleModel
 
 
 # init flask app
