@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
-from service.schedule import Registration, GetSchedule
 from db.connection import dbConnect
 from db.seeder import runSeeder
-from model.schedule import Schedule
+from service.schedule import ScheduleService
+from model.schedule import ScheduleModel
 
 
 # init flask app
@@ -10,27 +10,27 @@ app = Flask('__name__')
 
 
 # creating route
-@app.route('/', methods=['GET'])
+@app.route('/schedule', methods=['GET'])
 def schedule():
     if not request.is_json:
         return jsonify({"err": "no json object provided"}), 400
 
     date = request.json.get('date')
 
-# creating object for GetSchedule class
-    status = GetSchedule(date)
-    status = status._getSchedule()
+    # creating object for GetSchedule class
+    object = ScheduleService()
+    result, err = object.getSchedule(date)
 
-    if type(status) != list:
-        return jsonify({"err": status}), 400
+    if err != None:
+        return jsonify({"err": err}), 400
 
     return jsonify({
         "date": date,
-        "schedule": status
+        "schedule": result
     })
 
 
-@app.route('/reg', methods=['POST'])
+@app.route('/schedule', methods=['POST'])
 def registration():
     if not request.is_json:
         return jsonify({"err": "no json object provided"}), 400
@@ -46,16 +46,16 @@ def registration():
     date = request.json.get('date')
 
     # creating object for Registration class
-    status = Registration(nid, center, date)
-    status = status._vaccineRegistration()
+    object = ScheduleService()
+    result, err = object.addSchedule(nid, center, date)
 
-    if type(status) != Schedule:
-        return jsonify({"err": status}), 400
+    if err != None:
+        return jsonify({"err": err}), 400
 
     return jsonify({
         "msg": "registration successful",
-        "vaccination_date": status['date'],
-        "vaccination_center": status['center']
+        "vaccination_date": result['date'],
+        "vaccination_center": result['center']
     })
 
 

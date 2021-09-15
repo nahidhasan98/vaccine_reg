@@ -1,7 +1,7 @@
 import mongoengine
 
 
-class Schedule(mongoengine.Document):
+class ScheduleModel(mongoengine.Document):
     _id = mongoengine.StringField(required=True)
     nid = mongoengine.StringField(required=True)
     center = mongoengine.StringField(required=True)

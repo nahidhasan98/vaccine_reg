@@ -1,13 +1,12 @@
-from re import U
 from flask_seeder import Faker, generator
-from model.user import User
+from model.user import UserModel
 from uuid import uuid4
 
 
 def runSeeder(limit):
     # Create a new Faker and tell it how to create User objects
     faker = Faker(
-        cls=User,
+        cls=UserModel,
         init={
             "name": generator.Name(),
             "nid": generator.String('[1-9][0-9]{9}')

@@ -1,7 +1,7 @@
 import mongoengine
 
 
-class User(mongoengine.Document):
+class UserModel(mongoengine.Document):
     _id = mongoengine.StringField(Required=True,)
     name = mongoengine.StringField(Required=True)
     nid = mongoengine.StringField(Required=True)
