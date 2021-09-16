@@ -1,7 +1,7 @@
 import uuid
-from model.schedule import ScheduleModel
-from service.validator import ValidatorService
-from service.helper import HelperService
+from model import ScheduleModel
+from .validator import ValidatorService
+from .helper import HelperService
 
 
 class ScheduleService(ValidatorService, HelperService):

@@ -1,11 +1,8 @@
 import mongoengine
+from config import DB
 
 
 # db connention
 def dbConnect():
-    host = "mongodb://localhost"
-    port = 27017
-    alias = "dbSession"
-    dbName = "py_flask"
-
-    mongoengine.connect(db=dbName, alias=alias, host=host, port=port)
+    mongoengine.connect(db=DB.dbName, alias=DB.alias,
+                        host=DB.host, port=DB.port)

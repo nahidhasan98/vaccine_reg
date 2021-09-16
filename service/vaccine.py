@@ -1,15 +1,11 @@
-from flask import Flask, request, jsonify
-from db.connection import dbConnect
-from db.seeder import runSeeder
+from flask import request, jsonify, Blueprint
 from service.schedule import ScheduleService
 
-
-# init flask app
-app = Flask('__name__')
+blueprint = Blueprint('vaccine', __name__, url_prefix="/vaccine")
 
 
 # creating route
-@app.route('/schedule', methods=['GET'])
+@blueprint.route('/schedule', methods=['GET'])
 def schedule():
     if not request.is_json:
         return jsonify({"err": "no json object provided"}), 400
@@ -29,7 +25,7 @@ def schedule():
     })
 
 
-@app.route('/schedule', methods=['POST'])
+@blueprint.route('/schedule', methods=['POST'])
 def registration():
     if not request.is_json:
         return jsonify({"err": "no json object provided"}), 400
@@ -56,11 +52,3 @@ def registration():
         "vaccination_date": result['date'],
         "vaccination_center": result['center']
     })
-
-
-# run server
-if __name__ == '__main__':
-    dbConnect()
-    runSeeder(100)
-
-    app.run(port=9001, debug=True, use_reloader=False)
