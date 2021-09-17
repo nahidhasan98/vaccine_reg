@@ -2,8 +2,6 @@ from flask import request, jsonify
 from flask_restful import Resource
 from datetime import datetime, timedelta
 import uuid
-
-from werkzeug.sansio.multipart import State
 from api.user.model import UserModel
 from .model import ScheduleModel
 
