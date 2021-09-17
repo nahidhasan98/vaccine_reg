@@ -1,16 +1,16 @@
 from flask import Flask
-from flask_restful import Api
 from db import dbConnect, runSeeder
-from api.schedule.route import initScheduleRoutes
+from api.schedule.route import Schedule_BP
 
 # init flask app
 app = Flask(__name__)
-api = Api(app)
+
+# registering blueprint with flask app
+app.register_blueprint(Schedule_BP)
 
 # run server
 if __name__ == '__main__':
     dbConnect()
     runSeeder(100)
-    initScheduleRoutes(api)
 
     app.run(port=9001, debug=True, use_reloader=False)
