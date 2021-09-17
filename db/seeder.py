@@ -1,5 +1,5 @@
 from flask_seeder import Faker, generator
-from model.user import UserModel
+from api.user.model import UserModel
 from uuid import uuid4
 
 
