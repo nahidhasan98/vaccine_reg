@@ -1,6 +1,6 @@
 from flask import Blueprint
 from flask_restful import Api
-from .view import Schedule
+from api.schedule.view import Schedule
 
 # creating blueprint
 Schedule_BP = Blueprint('Schedule_BP', __name__, url_prefix='/api')

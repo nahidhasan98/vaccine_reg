@@ -1,6 +1,6 @@
 from flask_seeder import Faker, generator
 from api.user.model import UserModel
-from uuid import uuid4
+from extention import db
 
 
 def runSeeder(limit):
@@ -18,5 +18,5 @@ def runSeeder(limit):
 
     # Create 100 users
     for user in faker.create(limit):
-        user["_id"] = uuid4().hex
-        user.save()
+        db.session.add(user)
+        db.session.commit()

@@ -1,5 +1,8 @@
 class DB:
-    host = "mongodb://localhost"
-    port = 27017
-    alias = "dbSession"
+    dbUser = "postgres"
+    dbPass = "admin"
+
     dbName = "py_flask"
+
+    host = "localhost"
+    port = "5432"

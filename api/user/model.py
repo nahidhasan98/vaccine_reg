@@ -1,12 +1,16 @@
-import mongoengine
+from extention import db
 
 
-class UserModel(mongoengine.Document):
-    _id = mongoengine.StringField(Required=True,)
-    name = mongoengine.StringField(Required=True)
-    nid = mongoengine.StringField(Required=True)
+class UserModel(db.Model):
+    __tablename__ = 'user'
 
-    meta = {
-        'db_alias': 'dbSession',
-        'collection': 'user'
-    }
+    id = db.Column(db.Integer, primary_key=True)
+    nid = db.Column(db.String(10), unique=True)
+    name = db.Column(db.String(100))
+
+    def __init__(self, nid, name):
+        self.nid = nid
+        self.name = name
+
+    # def __repr__(self):
+    #     return f"<User {self.name}>"
