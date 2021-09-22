@@ -1,6 +1,6 @@
 from flask_seeder import Faker, generator
 from api.user.model import UserModel
-from extention import db
+from core.db import db
 
 
 def runSeeder(limit):

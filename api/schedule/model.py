@@ -1,4 +1,4 @@
-from extention import db
+from core.db import db
 
 
 class ScheduleModel(db.Model):

@@ -1,8 +1,8 @@
 from flask import Flask
 from config import DB
 from api.schedule import Schedule_BP
-from extention import db
-from util import runSeeder
+from core.db import db
+from core.util import runSeeder
 
 
 # init flask app
@@ -26,6 +26,5 @@ app.register_blueprint(Schedule_BP)
 
 # run server
 if __name__ == '__main__':
-    
 
     app.run(port=9001, debug=True, use_reloader=False)

@@ -3,7 +3,7 @@ from flask_restful import Resource
 from datetime import datetime, timedelta
 from api.user.model import UserModel
 from api.schedule.model import ScheduleModel
-from extention import db
+from core.db import db
 from sqlalchemy import func
 
 
