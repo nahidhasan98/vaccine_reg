@@ -11,7 +11,7 @@ class ValidatorService():
     # checking if provided date format is valid or not
     def validDateInputFormat(self, date):
         try:
-            _ = datetime.strptime(date, '%d-%m-%y')
+            _ = datetime.strptime(date, '%Y-%m-%d')
         except:
             return False
 
@@ -19,7 +19,7 @@ class ValidatorService():
 
     # checking if provided date is later from today or not
     def validDate(self, date):
-        ISODate = datetime.strptime(date, '%d-%m-%y')
+        ISODate = datetime.strptime(date, '%Y-%m-%d')
 
         if ISODate <= datetime.today():
             return False
@@ -37,25 +37,14 @@ class ValidatorService():
 
 
 class HelperService():
-    # converting input date(type string) to usable format(type date)
-    def getISODateFromString(self, date):
-        ISOFromattedDate = datetime.strptime(date, '%d-%m-%y')
-
-        return ISOFromattedDate
-
     # getting next available free slot/date for registration for a specific center
     def getNextAvailableSlot(self, center, dailyLimit):
         today = datetime.today().date()
-        print(today, type(today))
 
-        rows = db.session.query(ScheduleModel.date, func.count(ScheduleModel.date).label('count')) \
+        rows = db.session.query(ScheduleModel.date, func.count(ScheduleModel.date).label('total')) \
             .group_by(ScheduleModel.date) \
             .filter(ScheduleModel.center == center, ScheduleModel.date > today) \
             .order_by(ScheduleModel.date.asc())
-
-        # converting CommandCursor object to list
-        for row in rows:
-            print(row.date, row.count, rows.count())
 
         # safely assuming slot
         if rows.count() > 0:
@@ -67,7 +56,7 @@ class HelperService():
 
         # checking if any slot available between total registartion date range
         for row in rows:
-            if row.count < dailyLimit:
+            if row.total < dailyLimit:
                 gotSlot = row.date
                 break
 
@@ -116,18 +105,14 @@ class ScheduleService(ValidatorService, HelperService):
         # taking care of date
         if date:
             if not self.validDateInputFormat(date):
-                return None, "invalid date format. required format is: 31-12-21"
+                return None, "invalid date format. required format is: 2018-12-31"
 
             if not self.validDate(date):
                 return None, "invalid date. date must be later from today"
 
-            ISOFromattedDate = self.getISODateFromString(date)
-
-            if not self.hasSlot(center, ISOFromattedDate, self.__dailyLimit):
+            if not self.hasSlot(center, date, self.__dailyLimit):
                 freeSlot = self.getNextAvailableSlot(center, self.__dailyLimit)
                 return None, "no available slot on " + date + ", next available free slot on " + str(freeSlot)
-            else:
-                s.date = ISOFromattedDate
         else:
             s.date = self.getNextAvailableSlot(center, self.__dailyLimit)
 
@@ -139,12 +124,10 @@ class ScheduleService(ValidatorService, HelperService):
     def getSchedule(self, date):
         # taking care of date
         if not self.validDateInputFormat(date):
-            return None, "invalid date format. required format is: 31-12-21"
-
-        ISOFromattedDate = self.getISODateFromString(date)
+            return None, "invalid date format. required format is: 2018-12-31"
 
         # querying from db
-        rows = ScheduleModel.query.filter_by(date=ISOFromattedDate)
+        rows = ScheduleModel.query.filter_by(date=date)
 
         # processing to dict for json
         results = []
