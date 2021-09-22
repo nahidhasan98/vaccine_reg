@@ -26,5 +26,4 @@ app.register_blueprint(Schedule_BP)
 
 # run server
 if __name__ == '__main__':
-
     app.run(port=9001, debug=True, use_reloader=False)

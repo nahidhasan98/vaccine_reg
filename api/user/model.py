@@ -12,5 +12,5 @@ class UserModel(db.Model):
         self.nid = nid
         self.name = name
 
-    # def __repr__(self):
-    #     return f"<User {self.name}>"
+    def __repr__(self):
+        return f'UserModel ("id": {self.id}, "nid": {self.nid}, "name": {self.name})'

@@ -2,29 +2,18 @@ from flask import request, jsonify
 from flask_restful import Resource
 from datetime import datetime, timedelta
 from api.user.model import UserModel
-from api.schedule.model import ScheduleModel
+from api.schedule.model import ScheduleModel, ScheduleSchema
 from core.db import db
 from sqlalchemy import func
 
 
 class ValidatorService():
-    # checking if provided date format is valid or not
-    def validDateInputFormat(self, date):
-        try:
-            _ = datetime.strptime(date, '%Y-%m-%d')
-        except:
-            return False
-
-        return True
-
     # checking if provided date is later from today or not
-    def validDate(self, date):
-        ISODate = datetime.strptime(date, '%Y-%m-%d')
+    def previousDate(self, date):
+        if date <= datetime.today().date():
+            return True
 
-        if ISODate <= datetime.today():
-            return False
-
-        return True
+        return False
 
     # checking if provided nid is valid or not
     def validNID(self, nid):
@@ -55,10 +44,16 @@ class HelperService():
             gotSlot = today+timedelta(days=1)
 
         # checking if any slot available between total registartion date range
+        curr = today+timedelta(days=1)
         for row in rows:
-            if row.total < dailyLimit:
+            if row.date != curr:
+                gotSlot = curr
+                break
+            elif row.total < dailyLimit:
                 gotSlot = row.date
                 break
+            else:
+                curr += timedelta(days=1)
 
         return gotSlot
 
@@ -104,15 +99,12 @@ class ScheduleService(ValidatorService, HelperService):
 
         # taking care of date
         if date:
-            if not self.validDateInputFormat(date):
-                return None, "invalid date format. required format is: 2018-12-31"
-
-            if not self.validDate(date):
+            if self.previousDate(date):
                 return None, "invalid date. date must be later from today"
 
             if not self.hasSlot(center, date, self.__dailyLimit):
                 freeSlot = self.getNextAvailableSlot(center, self.__dailyLimit)
-                return None, "no available slot on " + date + ", next available free slot on " + str(freeSlot)
+                return None, "no available slot on " + str(date) + ", next available free slot on " + str(freeSlot)
         else:
             s.date = self.getNextAvailableSlot(center, self.__dailyLimit)
 
@@ -122,26 +114,10 @@ class ScheduleService(ValidatorService, HelperService):
 
     # function for getting schedule on a specific date
     def getSchedule(self, date):
-        # taking care of date
-        if not self.validDateInputFormat(date):
-            return None, "invalid date format. required format is: 2018-12-31"
-
         # querying from db
         rows = ScheduleModel.query.filter_by(date=date)
 
-        # processing to dict for json
-        results = []
-        for row in rows:
-            temp = {
-                'id': row.id,
-                'nid': row.nid,
-                'center': row.center,
-                'date': row.date,
-                'status': row.status,
-            }
-            results.append(temp)
-
-        return results, None
+        return rows
 
 
 class Schedule(Resource):
@@ -149,43 +125,44 @@ class Schedule(Resource):
         if not request.is_json:
             return {"err": "no json object provided"}, 400
 
-        date = request.json.get('date')
+        requestDate = request.json.get('date')
 
         # creating object for GetSchedule class
         object = ScheduleService()
-        result, err = object.getSchedule(date)
+        result = object.getSchedule(requestDate)
 
-        if err != None:
-            return {"err": err}, 400
+        # serializing object to native Python data types according to the Schema's fields
+        schema = ScheduleSchema(many=True)
+        schedules = schema.dump(result)
 
         return jsonify({
-            "date": date,
-            "schedule": result
+            "msg": "success",
+            "date": requestDate,
+            "schedule": schedules
         })
 
     def post(self):
         if not request.is_json:
             return {"err": "no json object provided"}, 400
 
-        nid = request.json.get('nid')
-        if not nid:
-            return {"err": "nid not provided"}, 400
+        requestData = request.get_json()
 
-        center = request.json.get('center')
-        if not center:
-            return {"err": "center not provided"}, 400
-
-        date = request.json.get('date')
+        # deserializing data structure to an object defined by the Schema's fields
+        schema = ScheduleSchema()
+        schedule = schema.load(requestData)
 
         # creating object for Registration class
         object = ScheduleService()
-        result, err = object.addSchedule(nid, center, date)
+        result, err = object.addSchedule(
+            schedule.nid, schedule.center, schedule.date)
 
         if err != None:
             return {"err": err}, 400
 
+        # serializing object to native Python data types according to the Schema's fields
+        addedSchedule = schema.dump(result)
+
         return jsonify({
             "msg": "registration successful",
-            "vaccination_date": result.date,
-            "vaccination_center": result.center
+            "schedule": addedSchedule
         })
