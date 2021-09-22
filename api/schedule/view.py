@@ -1,28 +1,10 @@
 from flask import request, jsonify
 from flask_restful import Resource
 from datetime import datetime, timedelta
-from api.user.model import UserModel
+from sqlalchemy import func
+from marshmallow import ValidationError
 from api.schedule.model import ScheduleModel, ScheduleSchema
 from core.db import db
-from sqlalchemy import func
-
-
-class ValidatorService():
-    # checking if provided date is later from today or not
-    def previousDate(self, date):
-        if date <= datetime.today().date():
-            return True
-
-        return False
-
-    # checking if provided nid is valid or not
-    def validNID(self, nid):
-        res = UserModel.query.filter_by(nid=nid).first()
-
-        if res:
-            return True
-
-        return False
 
 
 class HelperService():
@@ -77,7 +59,7 @@ class HelperService():
         return False
 
 
-class ScheduleService(ValidatorService, HelperService):
+class ScheduleService(HelperService):
     # daily registration limit
     __dailyLimit = 3
 
@@ -89,19 +71,12 @@ class ScheduleService(ValidatorService, HelperService):
             date=date
         )
 
-        # checking nid validitidy
-        if not self.validNID(nid):
-            return None, "invalid nid"
-
         # already registered??
         if self.alreadyRegistered(nid):
             return None, "this nid already registered"
 
         # taking care of date
         if date:
-            if self.previousDate(date):
-                return None, "invalid date. date must be later from today"
-
             if not self.hasSlot(center, date, self.__dailyLimit):
                 freeSlot = self.getNextAvailableSlot(center, self.__dailyLimit)
                 return None, "no available slot on " + str(date) + ", next available free slot on " + str(freeSlot)
@@ -114,10 +89,16 @@ class ScheduleService(ValidatorService, HelperService):
 
     # function for getting schedule on a specific date
     def getSchedule(self, date):
+        err = None
+        try:
+            datetime.strptime(date, '%Y-%m-%d')
+        except:
+            err = 'invalid date format. required format is: 2018-12-31'
+
         # querying from db
         rows = ScheduleModel.query.filter_by(date=date)
 
-        return rows
+        return rows, err
 
 
 class Schedule(Resource):
@@ -129,7 +110,10 @@ class Schedule(Resource):
 
         # creating object for GetSchedule class
         object = ScheduleService()
-        result = object.getSchedule(requestDate)
+        result, err = object.getSchedule(requestDate)
+
+        if err != None:
+            return {"err": err}, 400
 
         # serializing object to native Python data types according to the Schema's fields
         schema = ScheduleSchema(many=True)
@@ -138,7 +122,7 @@ class Schedule(Resource):
         return jsonify({
             "msg": "success",
             "date": requestDate,
-            "schedule": schedules
+            "schedules": schedules
         })
 
     def post(self):
@@ -147,9 +131,12 @@ class Schedule(Resource):
 
         requestData = request.get_json()
 
-        # deserializing data structure to an object defined by the Schema's fields
-        schema = ScheduleSchema()
-        schedule = schema.load(requestData)
+        try:
+            # deserializing data structure to an object defined by the Schema's fields
+            schema = ScheduleSchema()
+            schedule = schema.load(requestData)
+        except ValidationError as err:
+            return {"err": err.messages}, 400
 
         # creating object for Registration class
         object = ScheduleService()
