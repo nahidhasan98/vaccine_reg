@@ -2,7 +2,7 @@ from flask import Flask
 from config import DB
 from api.schedule import Schedule_BP
 from core.db import db
-from core.util import runSeeder
+from core.util import seedUserFromJSON
 
 
 # init flask app
@@ -19,7 +19,9 @@ with app.app_context():
     db.init_app(app)
     db.create_all()
     db.session.commit()
-    runSeeder(100)
+    # loading user data from json file
+    seedUserFromJSON()
+
 
 # registering blueprint with flask app
 app.register_blueprint(Schedule_BP)
