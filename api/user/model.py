@@ -9,10 +9,6 @@ class UserModel(db.Model):
     nid = db.Column(db.String(10), unique=True)
     name = db.Column(db.String(100))
 
-    def __init__(self, nid, name):
-        self.nid = nid
-        self.name = name
-
     def __repr__(self):
         return f'UserModel ("id": {self.id}, "nid": {self.nid}, "name": {self.name})'
 

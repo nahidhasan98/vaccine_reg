@@ -3,11 +3,14 @@ from flask_restful import Resource
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from marshmallow import ValidationError
-from api.schedule.model import ScheduleModel, ScheduleSchema
+from api.schedule.model import ScheduleModel, SchedulePOSTSchema, ScheduleGETSchema
 from core.db import db
 
 
 class HelperService():
+    # daily registration limit
+    dailyLimit = 3
+
     # getting next available free slot/date for registration for a specific center
     def getNextAvailableSlot(self, center, dailyLimit):
         today = datetime.today().date()
@@ -59,69 +62,31 @@ class HelperService():
         return False
 
 
-class ScheduleService(HelperService):
-    # daily registration limit
-    __dailyLimit = 3
-
-    # function for registration
-    def addSchedule(self, nid, center, date):
-        s = ScheduleModel(
-            nid=nid,
-            center=center,
-            date=date
-        )
-
-        # already registered??
-        if self.alreadyRegistered(nid):
-            return None, "this nid already registered"
-
-        # taking care of date
-        if date:
-            if not self.hasSlot(center, date, self.__dailyLimit):
-                freeSlot = self.getNextAvailableSlot(center, self.__dailyLimit)
-                return None, "no available slot on " + str(date) + ", next available free slot on " + str(freeSlot)
-        else:
-            s.date = self.getNextAvailableSlot(center, self.__dailyLimit)
-
-        db.session.add(s)
-        db.session.commit()
-        return s, None
-
-    # function for getting schedule on a specific date
-    def getSchedule(self, date):
-        err = None
-        try:
-            datetime.strptime(date, '%Y-%m-%d')
-        except:
-            err = 'invalid date format. required format is: 2018-12-31'
-
-        # querying from db
-        rows = ScheduleModel.query.filter_by(date=date)
-
-        return rows, err
-
-
-class Schedule(Resource):
+class Schedule(Resource, HelperService):
     def get(self):
         if not request.is_json:
             return {"err": "no json object provided"}, 400
 
-        requestDate = request.json.get('date')
+        requestDate = request.get_json()
 
-        # creating object for GetSchedule class
-        object = ScheduleService()
-        result, err = object.getSchedule(requestDate)
+        try:
+            # deserializing data structure to an object defined by the Schema's fields
+            schema = ScheduleGETSchema()
+            schedule = schema.load(requestDate)
+        except ValidationError as err:
+            return {"err": err.messages}, 400
 
-        if err != None:
-            return {"err": err}, 400
+        # processing to get schedule
+        # querying from db
+        results = ScheduleModel.query.filter_by(date=schedule.date)
 
         # serializing object to native Python data types according to the Schema's fields
-        schema = ScheduleSchema(many=True)
-        schedules = schema.dump(result)
+        schema = ScheduleGETSchema(many=True)
+        schedules = schema.dump(results)
 
         return jsonify({
             "msg": "success",
-            "date": requestDate,
+            "date": schedule.date,
             "schedules": schedules
         })
 
@@ -133,21 +98,31 @@ class Schedule(Resource):
 
         try:
             # deserializing data structure to an object defined by the Schema's fields
-            schema = ScheduleSchema()
+            schema = SchedulePOSTSchema()
             schedule = schema.load(requestData)
         except ValidationError as err:
             return {"err": err.messages}, 400
 
-        # creating object for Registration class
-        object = ScheduleService()
-        result, err = object.addSchedule(
-            schedule.nid, schedule.center, schedule.date)
+        # processing to add a schedule
+        # already registered??
+        if self.alreadyRegistered(schedule.nid):
+            return {"err": "this nid already registered"}, 400
 
-        if err != None:
-            return {"err": err}, 400
+        # taking care of date
+        if schedule.date:
+            if not self.hasSlot(schedule.center, schedule.date, self.dailyLimit):
+                freeSlot = self.getNextAvailableSlot(
+                    schedule.center, self.dailyLimit)
+                return {"err": "no available slot on " + str(schedule.date) + ", next available free slot on " + str(freeSlot)}, 400
+        else:
+            schedule.date = self.getNextAvailableSlot(
+                schedule.center, self.dailyLimit)
+
+        db.session.add(schedule)
+        db.session.commit()
 
         # serializing object to native Python data types according to the Schema's fields
-        addedSchedule = schema.dump(result)
+        addedSchedule = schema.dump(schedule)
 
         return jsonify({
             "msg": "registration successful",

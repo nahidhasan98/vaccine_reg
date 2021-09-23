@@ -14,11 +14,6 @@ class ScheduleModel(db.Model):
     date = db.Column(db.Date)
     doseCompleted = db.Column(db.Integer, default=0)
 
-    def __init__(self, nid, center, date=None):
-        self.nid = nid
-        self.center = center
-        self.date = date
-
     def __repr__(self):
         return f'ScheduleModel ("id": {self.id}, "nid": {self.nid}, "center": {self.center}, "date": {self.date}, "doseCompleted": {self.doseCompleted})'
 
@@ -38,7 +33,7 @@ class CustomValidator():
             raise ValidationError('invalid nid')
 
 
-class ScheduleSchema(Schema):
+class SchedulePOSTSchema(Schema):
     id = fields.Integer(dump_only=True)
     nid = fields.String(required=True, validate=CustomValidator.validNID)
     center = fields.String(required=True)
@@ -47,4 +42,16 @@ class ScheduleSchema(Schema):
 
     @post_load
     def create_schedule(self, data, **kwargs):
+        return ScheduleModel(**data)
+
+
+class ScheduleGETSchema(Schema):
+    id = fields.Integer(dump_only=True)
+    nid = fields.String(dump_only=True)
+    center = fields.String(dump_only=True)
+    date = fields.Date(required=True)
+    doseCompleted = fields.Integer(dump_only=True)
+
+    @post_load
+    def get_schedule(self, data, **kwargs):
         return ScheduleModel(**data)
