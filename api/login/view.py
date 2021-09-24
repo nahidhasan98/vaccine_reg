@@ -4,8 +4,6 @@ from marshmallow import ValidationError
 from api.user.model import UserModel
 from api.login.model import LoginSchema
 from api.jwt.jwt import JWT
-from core.db import db
-from core.util import getCurrentUser
 
 
 class HelperService():

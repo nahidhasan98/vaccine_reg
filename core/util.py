@@ -45,8 +45,3 @@ def seedUserFromJSON():
         db.session.commit()
     except:
         print("Data alredy loaded in DB")
-
-
-def getCurrentUser():
-    user = UserModel.query.filter_by(authenticated=True).first()
-    return user
