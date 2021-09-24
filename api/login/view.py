@@ -59,7 +59,7 @@ class Login(Resource, HelperService):
 
         # password matching
         if login.password != user.password:
-            return {"err": "invalid password"}, 402
+            return {"err": "invalid password"}, 401
 
         # before log in log out other user (if any user logged in already)
         self.clearLogIn()
