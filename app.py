@@ -19,6 +19,9 @@ with app.app_context():
     db.init_app(app)
     db.create_all()
     db.session.commit()
+    # loading user data from faker generator
+    # seedUserFromFakerGenerator(100)
+
     # loading user data from json file
     seedUserFromJSON()
 

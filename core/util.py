@@ -12,8 +12,10 @@ def seedUserFromFakerGenerator(limit):
     faker = Faker(
         cls=UserModel,
         init={
+            "nid": generator.String('[1-9][0-9]{9}'),
             "name": generator.Name(),
-            "nid": generator.String('[1-9][0-9]{9}')
+            "email": generator.Email(),
+            "password": generator.String('[a-z]{8}')
         },
     )
     # deleting old data
