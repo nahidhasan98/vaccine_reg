@@ -48,7 +48,7 @@ class Login(Resource, HelperService, JWT):
 
         # password matching
         if login.password != user.password:
-            return {"err": "invalid password"}, 402
+            return {"err": "invalid password"}, 401
 
         # password matched
         # generate jwt token

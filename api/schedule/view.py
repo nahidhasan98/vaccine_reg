@@ -1,3 +1,4 @@
+from api.jwt.jwt import JWT
 from flask import request, jsonify
 from flask_restful import Resource
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from api.schedule.model import ScheduleModel, SchedulePOSTSchema, ScheduleGETSch
 from core.db import db
 
 
-class HelperService():
+class HelperService(JWT):
     # daily registration limit
     dailyLimit = 3
 
@@ -61,9 +62,31 @@ class HelperService():
 
         return False
 
+    # checking jwt token
+    def authorization(self):
+        auth_token = None
+
+        # get the auth token form header
+        auth_header = request.headers.get('Authorization')
+
+        if auth_header:
+            auth_token_list = auth_header.split(" ")
+
+            if len(auth_token_list) > 1:
+                auth_token = auth_token_list[1]
+
+        if not auth_token:
+            return "no token provided"
+
+        return self.decode_auth_token(auth_token)
+
 
 class Schedule(Resource, HelperService):
     def get(self):
+        err = self.authorization()
+        if err:
+            return {"err": err}, 401
+
         if not request.is_json:
             return {"err": "no json object provided"}, 400
 
@@ -91,6 +114,10 @@ class Schedule(Resource, HelperService):
         })
 
     def post(self):
+        err = self.authorization()
+        if err:
+            return {"err": err}, 401
+
         if not request.is_json:
             return {"err": "no json object provided"}, 400
 

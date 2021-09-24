@@ -24,15 +24,16 @@ class JWT:
         except Exception as err:
             return err
 
-    def decode_auth_token(auth_token):
+    def decode_auth_token(self, auth_token):
         """
         Decodes the auth token
         :param auth_token:
         :return: integer|string
         """
         try:
-            payload = jwt.decode(auth_token, JWT.SECRET_KEY)
-            return payload['email']
+            payload = jwt.decode(auth_token, JWTConfig.SECRET_KEY)
+            # return payload['email']
+            return None
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please log in again.'
         except jwt.InvalidTokenError:
