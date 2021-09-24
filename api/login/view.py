@@ -3,6 +3,7 @@ from flask_restful import Resource
 from marshmallow import ValidationError
 from api.user.model import UserModel
 from api.login.model import LoginSchema
+from api.jwt.jwt import JWT
 from core.db import db
 from core.util import getCurrentUser
 
@@ -23,16 +24,8 @@ class HelperService():
 
         return user
 
-    # logging out the logged in user
-    def clearLogIn(self):
-        user = getCurrentUser()
 
-        if user:
-            user.authenticated = False
-            db.session.commit()
-
-
-class Login(Resource, HelperService):
+class Login(Resource, HelperService, JWT):
     def post(self):
         if not request.is_json:
             return {"err": "no json object provided"}, 400
@@ -53,39 +46,16 @@ class Login(Resource, HelperService):
 
         user = self.getUserFromDB(login.email)
 
-        # already logged in?
-        if user.authenticated:
-            return {"err": "user already logged in"}, 400
-
         # password matching
         if login.password != user.password:
             return {"err": "invalid password"}, 402
 
-        # before log in log out other user (if any user logged in already)
-        self.clearLogIn()
-
-        # password matched. update logged info to DB
-        user.authenticated = True
-        db.session.commit()
+        # password matched
+        # generate jwt token
+        token = self.encode_auth_token(login.email)
+        token = token.decode("utf-8")
 
         return jsonify({
             "msg": "login successful",
-            "user": login.email
-        })
-
-
-class Logout(Resource):
-    def get(self):
-        currentUser = getCurrentUser()
-
-        if not currentUser:
-            return {"err": "you are not logged in"}, 400
-
-        currentUser.authenticated = False
-
-        # update DB with logout info
-        db.session.commit()
-
-        return jsonify({
-            "msg": "logout successful"
+            "token": token
         })

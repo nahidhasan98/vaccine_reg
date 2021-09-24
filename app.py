@@ -1,5 +1,5 @@
 from flask import Flask
-from config import DB
+from config import DBConfig
 from api.login import Login_BP
 from api.schedule import Schedule_BP
 from core.db import db
@@ -11,7 +11,8 @@ app = Flask(__name__)
 
 # setting up app configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://" + \
-    DB.dbUser+":"+DB.dbPass+"@"+DB.host+":"+DB.port+"/"+DB.dbName
+    DBConfig.dbUser+":"+DBConfig.dbPass+"@" + \
+    DBConfig.host+":"+DBConfig.port+"/"+DBConfig.dbName
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 

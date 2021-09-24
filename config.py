@@ -1,4 +1,4 @@
-class DB:
+class DBConfig:
     dbUser = "postgres"
     dbPass = "admin"
 
@@ -6,3 +6,7 @@ class DB:
 
     host = "localhost"
     port = "5432"
+
+
+class JWTConfig:
+    SECRET_KEY = "my_secret_key"
