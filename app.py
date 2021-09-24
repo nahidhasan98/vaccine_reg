@@ -1,5 +1,6 @@
 from flask import Flask
 from config import DB
+from api.login import Login_BP
 from api.schedule import Schedule_BP
 from core.db import db
 from core.util import seedUserFromJSON
@@ -27,6 +28,7 @@ with app.app_context():
 
 
 # registering blueprint with flask app
+app.register_blueprint(Login_BP)
 app.register_blueprint(Schedule_BP)
 
 # run server
