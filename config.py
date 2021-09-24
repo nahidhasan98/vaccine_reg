@@ -1,4 +1,4 @@
-class DB:
+class DBConfig:
     dbUser = "postgres"
     dbPass = "admin"
 
