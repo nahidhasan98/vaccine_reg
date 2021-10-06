@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:14.0-alpine3.14
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /postgresdb:/var/lib/postgresql/data    # the postgresdb folder will be created at / location
+
+  app:
+    build: .                  # docker image will be created/built first, then that image will be used
+    container_name: app       # a container will be created with this name
+    ports:
+      - "9001:9001"
+    environment:
+      dbUser: "postgres"
+      dbPass: "admin"
+      dbHost: "db"
+      dbPort: "5432"
+      dbName: "postgres"
+    depends_on:
+      - db                    # our database service

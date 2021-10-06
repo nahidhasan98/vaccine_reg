@@ -12,7 +12,7 @@ app = Flask(__name__)
 # setting up app configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://" + \
     DBConfig.dbUser+":"+DBConfig.dbPass+"@" + \
-    DBConfig.host+":"+DBConfig.port+"/"+DBConfig.dbName
+    DBConfig.dbHost+":"+DBConfig.dbPort+"/"+DBConfig.dbName
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
@@ -34,4 +34,4 @@ app.register_blueprint(Schedule_BP)
 
 # run server
 if __name__ == '__main__':
-    app.run(port=9001, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=9001, debug=True, use_reloader=False)
